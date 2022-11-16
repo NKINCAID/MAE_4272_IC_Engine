@@ -11,7 +11,7 @@ or download the folder from [Github](https://github.com/NKINCAID/MAE_4272_IC_Eng
 
 Conda
 ---------
-1. Install [Anaconda](https://www.anaconda.com/download/) on your machine (make sure to select Python 3!)
+1. Install [Anaconda](https://www.anaconda.com/download/) or [Miniconda](https://docs.conda.io/en/latest/miniconda.html) on your machine (make sure to select Python 3!)
 
 2. Make sure the installation went smoothly:
 ```bash

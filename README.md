@@ -1,4 +1,4 @@
-Guide for Installing Cantera with a Conda environment
+Guide for Installing Cantera with a Conda Environment
 =========
 
 
@@ -10,12 +10,6 @@ Conda
 ```bash
 conda --version
 ```
-If you get an error or don't see the version output, it's possible that your current bash doesn't know where conda is! This can be fixed by adding the anaconda or miniconda bin location to your systems PATH variable to your *.bash_profile* or *.bashrc* 
-```bash
-# add path to conda
-export PATH="Your_path_to_anaconda/anaconda3/bin:$PATH"
-```
-You may need to `source .bash_profile` or just restart your bash.
 
 Creating a Virtual Envrionment and Installing Cantera
 ---------
@@ -39,3 +33,7 @@ print(ct.avogadro)
 ```
 
 For more information on installing Cantera checkout the [Cantera website](https://cantera.org/install/conda-install.html#sec-install-conda) 
+
+Running IC Engine
+---------
+test

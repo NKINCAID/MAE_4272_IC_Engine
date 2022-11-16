@@ -16,7 +16,7 @@ ct.suppress_thermo_warnings()
 #########################################################################
 
 # reaction mechanism, kinetics type and compositions
-reaction_mechanism = "mechs/san_diego.yaml"
+reaction_mechanism = "gri30.yaml"
 comp_air = "O2:1, N2:3.76"
 fuel = "C3H8"
 
@@ -24,6 +24,8 @@ f = 1000.0 / 60.0  # engine speed [revs/s] (1000 rpm)
 cr = 8.8  # compression ratio [-]
 d_piston = 0.091  # piston diameter [m]
 stroke = 0.086  # stroke length [m]
+
+fuel_mass = 5e-5  # Mass of fuel injected into the cylinder [kg]
 
 # Inlet temperature, pressure, and composition
 T_inlet = 300.0  # K
@@ -96,11 +98,14 @@ gas.TP = T_inlet, p_inlet
 gas.set_equivalence_ratio(equivalence_ratio, fuel, comp_ambient)
 inlet = ct.Reservoir(gas)
 
-# inlet valve
-inlet_valve = ct.Valve(inlet, cyl)
+# inlet is modeled as a mass flow controller
+inlet_mass = fuel_mass / gas.Y[gas.species_index(fuel)]
+
+inlet_mfc = ct.MassFlowController(inlet, cyl)
 inlet_delta = np.mod(inlet_close - inlet_open, 4 * np.pi)
-inlet_valve.valve_coeff = inlet_valve_coeff
-inlet_valve.set_time_function(
+inlet_t_open = (inlet_close - inlet_open) / 2.0 / np.pi / f
+inlet_mfc.mass_flow_coeff = inlet_mass / inlet_t_open
+inlet_mfc.set_time_function(
     lambda t: np.mod(crank_angle(t) - inlet_open, 4 * np.pi) < inlet_delta
 )
 
@@ -176,7 +181,7 @@ while sim.time < t_stop:
         ca=crank_angle(sim.time),
         V=cyl.volume,
         m=cyl.mass,
-        mdot_in=inlet_valve.mass_flow_rate,
+        mdot_in=inlet_mfc.mass_flow_rate,
         mdot_out=outlet_valve.mass_flow_rate,
         dWv_dt=dWv_dt,
     )
@@ -188,8 +193,8 @@ while sim.time < t_stop:
 
 V1 = V_stroke + V_tdc
 P1 = ct.one_atm
-T1 = 300.0
-gas.TP = 300, ct.one_atm
+T1 = T_inlet
+gas.TP = T1, ct.one_atm
 gas.set_equivalence_ratio(equivalence_ratio, fuel, comp_air)
 cp_low = gas.cp
 cv_low = gas.cv
@@ -202,7 +207,7 @@ cv = (cv_high + cv_low) / 2
 
 gamma = cp / cv
 
-gas.TP = 300, ct.one_atm
+gas.TP = T1, ct.one_atm
 gas.set_equivalence_ratio(equivalence_ratio, fuel, comp_air)
 
 V2 = V_tdc
@@ -220,7 +225,7 @@ P4 = P1 * P3 / P2
 
 eta = 1 - 1 / (cr ** (gamma - 1))
 
-print("Simple Thermodynamic Model:")
+print("\nSimple Thermodynamic Model:")
 print("-----------------------------------------------------------")
 print(
     "{:<8} | {:<10} | {:<10} | {:<10}".format("Position", "V [L]", "T [K]", "P [Bar]")
@@ -295,6 +300,7 @@ fig, ax = plt.subplots()
 ax.plot(t, states("O2").X, label="O2")
 ax.plot(t, states("CO2").X, label="CO2")
 ax.plot(t, states("CO").X, label="CO")
+ax.plot(t, states("NO").X, label="NO")
 ax.plot(t, states(fuel).X, label=fuel)
 ax.legend(loc=0)
 ax.set_ylabel("$X_i$ [-]")
@@ -331,9 +337,18 @@ CO_emission /= trapz(MW * states.mdot_out, t)
 CO2_emission = trapz(MW * states.mdot_out * states("CO2").X[:, 0], t)
 CO2_emission /= trapz(MW * states.mdot_out, t)
 
+NO_emission = trapz(MW * states.mdot_out * states("NO").X[:, 0], t) / trapz(
+    MW * states.mdot_out, t
+)
+NO2_emission = trapz(MW * states.mdot_out * states("NO2").X[:, 0], t) / trapz(
+    MW * states.mdot_out, t
+)
+
 
 print(output_str.format("CO emission (estimate):", CO_emission * 1.0e6, "ppm"))
 print(output_str.format("CO2 emission (estimate):", CO2_emission * 1.0e6, "ppm"))
+print(output_str.format("NO emission (estimate):", CO_emission * 1.0e6, "ppm"))
+print(output_str.format("NO2 emission (estimate):", CO2_emission * 1.0e6, "ppm"))
 
 
 # Storing data

@@ -254,7 +254,7 @@ t = states.t
 
 # pressure and temperature
 xticks = np.arange(0, t[-1] + 0.06, 0.06)
-fig, ax = plt.subplots(nrows=2)
+fig, ax = plt.subplots(nrows=2, sharex=True)
 ax[0].plot(t, states.P / 1.0e5)
 ax[0].set_ylabel("$p$ [bar]")
 ax[0].set_xlabel(r"$\phi$ [deg]")
@@ -347,8 +347,8 @@ NO2_emission = trapz(MW * states.mdot_out * states("NO2").X[:, 0], t) / trapz(
 
 print(output_str.format("CO emission (estimate):", CO_emission * 1.0e6, "ppm"))
 print(output_str.format("CO2 emission (estimate):", CO2_emission * 1.0e6, "ppm"))
-print(output_str.format("NO emission (estimate):", CO_emission * 1.0e6, "ppm"))
-print(output_str.format("NO2 emission (estimate):", CO2_emission * 1.0e6, "ppm"))
+print(output_str.format("NO emission (estimate):", NO_emission * 1.0e6, "ppm"))
+print(output_str.format("NO2 emission (estimate):", NO2_emission * 1.0e6, "ppm"))
 
 
 # Storing data

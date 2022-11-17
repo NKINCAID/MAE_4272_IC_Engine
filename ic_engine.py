@@ -155,7 +155,7 @@ t_stop = sim_n_revolutions / f
 while sim.time < t_stop:
 
     if spark_function(sim.time):
-        H1 = cyl.thermo.enthalpy_mass * cyl.mass
+        U1 = cyl.thermo.cp_mass * cyl.mass * cyl.thermo.T
 
         print("Sparking now...", sim.time, crank_angle(sim.time) * 180 / np.pi)
         combustor = ct.Solution(reaction_mechanism)
@@ -163,7 +163,7 @@ while sim.time < t_stop:
         combustor.equilibrate("UV")
         cyl.insert(combustor)
         sim.initialize()
-        H2 = cyl.thermo.enthalpy_mass * cyl.mass
+        U2 = cyl.thermo.cp_mass * cyl.mass * cyl.thermo.T
 
         sim.advance(sim.time + dt)
 
@@ -313,13 +313,14 @@ ax.set_xticklabels(ca_ticks(xticks))
 ######################################################################
 
 # heat release
-Q = trapz(states.heat_release_rate * states.V, t)
+# Q = trapz(states.heat_release_rate * states.V, t)
+Q = (U2 - U1) * sim_n_revolutions / 2.0
 output_str = "{:45s}{:>4.1f} {}"
-# print(
-#     output_str.format(
-#         "Heat release rate per cylinder (estimate):", Q / t[-1] / 1000.0, "kW"
-#     )
-# )
+print(
+    output_str.format(
+        "Heat release rate per cylinder (estimate):", Q / t[-1] / 1000.0, "kW"
+    )
+)
 
 # expansion power
 W = trapz(states.dWv_dt, t)
@@ -328,6 +329,9 @@ print(
         "Expansion power per cylinder (estimate):", W / t[-1] / 1000.0, "kW"
     )
 )
+
+# Efficiency power
+print(output_str.format("Efficiency (estimate):", W / Q * 100, "%\n"))
 
 # CO emissions
 MW = states.mean_molecular_weight
